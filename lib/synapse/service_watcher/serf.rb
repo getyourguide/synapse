@@ -111,6 +111,12 @@ module Synapse
 
         members.each do |member|
           next unless member['status'] == 'alive'
+
+          serverweight = 50
+          if member['tags'].has_key? 'smart:serverweight'
+            serverweight = member['tags']['smart:serverweight']
+          end
+
           member['tags'].each do |tag,data|
             if tag =~ /^smart:#{@name}(|_[0-9]+)$/
               host,port = data.split ':'
@@ -138,6 +144,7 @@ module Synapse
                 'host' => host,
                 'port' => port,
                 'extra_haproxy_conf' => extra_haproxy_conf,
+                'serverweight' => serverweight,
               }
               log.debug "discovered backend #{member['name']} at #{host}:#{port} for service #{@name}"
             end
