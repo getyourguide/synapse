@@ -654,8 +654,8 @@ module Synapse
         config.map {|c| "\t#{c}"},
         watcher.backends.shuffle.map {|backend|
           backend_name = construct_name(backend)
-          "\tserver #{backend_name} #{backend['host']}:#{backend['port']} #{watcher.haproxy['server_options']}".
-            gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
+          "\tserver #{backend_name} #{backend['host']}:#{backend['port']} #{watcher.haproxy['server_options']}"
+            .gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
         }
       ]
     end
