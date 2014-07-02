@@ -657,6 +657,7 @@ module Synapse
           "\tserver #{backend_name} #{backend['host']}:#{backend['port']} #{watcher.haproxy['server_options']}"
             .gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
             .gsub('{serverweight}', backend['serverweight'].to_s)
+            + ((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
         }
       ]
     end
