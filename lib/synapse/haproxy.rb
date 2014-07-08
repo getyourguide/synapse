@@ -521,6 +521,9 @@ module Synapse
 
       # a place to store the parsed haproxy config from each watcher
       @watcher_configs = {}
+
+      # support weight: must store it here for the stats socket use
+      @server_weights = {}
     end
 
     def update_config(watchers)
@@ -658,6 +661,8 @@ module Synapse
             .gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
             .gsub('{serverweight}', backend['serverweight'].to_s)
             .+((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
+
+          @server_weights[backend_name] = "50" || backend['serverweight']
         }
       ]
     end
@@ -717,6 +722,7 @@ module Synapse
         backends.each do |backend|
           if enabled_backends[section].include? backend
             command = "enable server #{section}/#{backend}\n"
+            log.warn "set weight #{section}/#{backend} #{@server_weights[backend]}\n"
           else
             command = "disable server #{section}/#{backend}\n"
           end
