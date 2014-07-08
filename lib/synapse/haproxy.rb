@@ -522,8 +522,8 @@ module Synapse
       # a place to store the parsed haproxy config from each watcher
       @watcher_configs = {}
 
-      # support weight: must store it here for the stats socket use
-      @server_weights = {}
+      # support weight and maybe other things later: must store it here for the stats socket use
+      @backends_by_name = {}
     end
 
     def update_config(watchers)
@@ -652,6 +652,12 @@ module Synapse
         log.warn "synapse: no backends found for watcher #{watcher.name}"
       end
 
+      # for server weights among other things
+      watcher.backends.each do |backend|
+        @backends_by_name[watcher.name] = {} unless @backends_by_name.has_key?(watcher.name)
+        @backends_by_name[watcher.name][construct_name(backend)] = backend
+      end
+
       stanza = [
         "\nbackend #{watcher.name}",
         config.map {|c| "\t#{c}"},
@@ -661,7 +667,6 @@ module Synapse
             .gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
             .gsub('{serverweight}', backend['serverweight'].to_s)
             .+((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
-
         }
       ]
     end
@@ -721,6 +726,7 @@ module Synapse
         backends.each do |backend|
           if enabled_backends[section].include? backend
             command = "enable server #{section}/#{backend}\n"
+                   .+ "set weight #{section}/#{backend} #{'50' || @backends_by_name[section][backend]['serverweight']}\n"
           else
             command = "disable server #{section}/#{backend}\n"
           end
@@ -735,7 +741,8 @@ module Synapse
             @restart_required = true
             return
           else
-            unless output == "\n"
+            # command.lines.count is the number of commands executed
+            unless output == "\n" * command.lines.count
               log.warn "synapse: socket command #{command} failed: #{output}"
               @restart_required = true
               return
