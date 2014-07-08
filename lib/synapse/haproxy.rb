@@ -662,7 +662,6 @@ module Synapse
             .gsub('{serverweight}', backend['serverweight'].to_s)
             .+((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
 
-          @server_weights[backend_name] = "50" || backend['serverweight']
         }
       ]
     end
@@ -722,7 +721,6 @@ module Synapse
         backends.each do |backend|
           if enabled_backends[section].include? backend
             command = "enable server #{section}/#{backend}\n"
-            log.warn "set weight #{section}/#{backend} #{@server_weights[backend]}\n"
           else
             command = "disable server #{section}/#{backend}\n"
           end
