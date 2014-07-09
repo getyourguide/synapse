@@ -527,15 +527,16 @@ module Synapse
     end
 
     def update_config(watchers)
+
+      # generate a new config
+      new_config = generate_config(watchers)
+
       # if we support updating backends, try that whenever possible
       if @opts['do_socket']
         update_backends(watchers) unless @restart_required
       else
         @restart_required = true
       end
-
-      # generate a new config
-      new_config = generate_config(watchers)
 
       # if we write config files, lets do that and then possibly restart
       if @opts['do_writes']
@@ -665,7 +666,7 @@ module Synapse
           backend_name = construct_name(backend)
           "\tserver #{backend_name} #{backend['host']}:#{backend['port']} #{watcher.haproxy['server_options']}"
             .gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
-            .gsub('{serverweight}', backend['serverweight'].to_s)
+            .+((backend.has_key? 'serverweight' and watcher.haproxy['add_server_weight']) ? " weight #{backend['serverweight']}" : '') 
             .+((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
         }
       ]
@@ -726,7 +727,7 @@ module Synapse
         backends.each do |backend|
           if enabled_backends[section].include? backend
             command = "enable server #{section}/#{backend}\n"
-                   .+ "set weight #{section}/#{backend} #{'50' || @backends_by_name[section][backend]['serverweight']}\n"
+                   .+ "set weight #{section}/#{backend} #{@backends_by_name[section][backend]['serverweight'] || '1'}\n"
           else
             command = "disable server #{section}/#{backend}\n"
           end

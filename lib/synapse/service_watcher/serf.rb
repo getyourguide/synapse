@@ -12,6 +12,12 @@ module Synapse
       if opts['haproxy']['all_backups_except_one']
         @all_backups_except_one = opts['haproxy']['all_backups_except_one']
       end
+
+      @add_server_weight = false
+      if opts['haproxy']['add_server_weight']
+        @add_server_weight = opts['haproxy']['add_server_weight']
+      end
+
     end
 
     def start
@@ -112,9 +118,12 @@ module Synapse
         members.each do |member|
           next unless member['status'] == 'alive'
 
-          serverweight = 50
-          if member['tags'].has_key? 'smart:serverweight'
-            serverweight = member['tags']['smart:serverweight']
+          serverweight = 1
+          if @add_server_weight
+            serverweight = 50
+            if member['tags'].has_key? 'smart:serverweight'
+              serverweight = member['tags']['smart:serverweight']
+            end
           end
 
           member['tags'].each do |tag,data|
