@@ -21,8 +21,8 @@ module Synapse
       raise "haproxy config section is missing" unless opts.has_key?('haproxy')
       @haproxy = Haproxy.new(opts['haproxy'])
 
-      # configuration is initially enabled to configure on first loop
-      @config_updated = true
+      # configuration is initially disabled
+      @config_updated = false
     end
 
     # start all the watchers and enable haproxy configuration
@@ -31,6 +31,9 @@ module Synapse
 
       # start all the watchers
       @service_watchers.map { |watcher| watcher.start }
+
+      # wait for them to initialize
+      sleep 1
 
       # main loop
       loops = 0
